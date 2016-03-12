@@ -79,24 +79,12 @@ function runBot() {
 
 	bot.onText(/Wallet/,function (msg) {
 		var chatId = msg.chat.id;
-		var scope = ['account-info', 'operation-history'];
-		var url = Wallet.buildObtainTokenUrl(config.applicationId, config.redirectURI  + '?chatId=' + chatId, scope);
-		bot.sendMessage(chatId, 'Чуваааак, авторизуйся у меня [Я ссылко, жмякни на меня](' + url + ')', {
-			'parse_mode': 'Markdown'
-		});
-
-		// Меняем на постоянный токен
-		// Wallet.getAccessToken(config.applicationId, 'code', config.redirectURI, scope, function(err, data) {
-		//  console.log('------------------getAccessToken---------------');
-		//  console.log(response.statusCode);
-		//  console.log(data.status);
-		//  console.log(data);
-		//  if(err) {
-		//    // process error
-		//  }
-		//  var accessToken = data['access_token'];
-		//  // save it to DB, config, etc..
+		// var scope = ['account-info', 'operation-history', 'payment-p2p'];
+		// var url = Wallet.buildObtainTokenUrl(config.applicationId, config.redirectURI  + '?chatId=' + chatId, scope);
+		// bot.sendMessage(chatId, 'Чуваааак, авторизуйся у меня [Я ссылко, жмякни на меня](' + url + ')', {
+		// 	'parse_mode': 'Markdown'
 		// });
+		// startP2P('410013269422933', 0.02, chatId, accessToken);
 	});
 
 	bot.onText(/refill/, refillHandler);
@@ -203,6 +191,54 @@ function startAccountRefill(accountNumber, sum, chatId) {
 			});
 		}
 	});
+}
+
+
+function startP2P(accountNumber, sum, chatId, accessToken) {
+	var api = new Wallet(accessToken);
+
+	//make request payment and process it
+	var requestOptions = {
+		"pattern_id": "p2p",
+		// "to": "410013269422933",
+		// "to": accountNumber,
+		"amount_due": sum,
+		"comment": "test payment comment from yandex-money-nodejs",
+		"message": "test payment message from yandex-money-nodejs",
+		"label": "testPayment"
+		// ,
+		// 'hold_for_pickup': true
+		// ,
+		// "test_payment": true,
+		// "test_result": "success"
+	};
+
+	api.requestPayment(requestOptions, function requestComplete(err, data) {
+		console.log('-----------------requestComplete-----------------');
+		console.log(err);
+		console.log(data);
+		if (err) {
+			// process error
+		}
+		if (data.status !== "success") {
+			// process failure
+		}
+		var requestId = data['request_id'];
+
+		// api.processPayment({
+		// 	"request_id": requestId
+		// 	}, processComplete);
+	});
+
+	function processComplete(err, data) {
+		console.log('-----------------requestComplete-----------------');
+		console.log(err);
+		console.log(data);
+		if(err) {
+			// process error
+		}
+		// process status
+	}
 }
 
 module.exports = runBot;

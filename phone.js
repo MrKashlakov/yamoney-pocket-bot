@@ -65,8 +65,10 @@ function startPhone(options, processComplete) {
 	var requestOptions = {
 		"pattern_id": "phone-topup",
 		"phone-number": options.phone,
-		"amount": options.sum
+		"amount_due": options.sum
 	};
+
+	console.log(requestOptions)
 
 	api.requestPayment(requestOptions, function requestComplete(err, data) {
 		console.log('-----------------requestComplete-----------------');

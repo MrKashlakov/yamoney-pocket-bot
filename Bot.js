@@ -3,6 +3,7 @@ var yandexMoney = require("yandex-money-sdk");
 var config = require('./config');
 var Wallet = yandexMoney.Wallet;
 var ExternalPayment = yandexMoney.ExternalPayment;
+var p2p = require('./p2p');
 
 var dbName = 'easyway';
 var db = require('mongodb-promises').db('localhost:27017', dbName);
@@ -54,8 +55,7 @@ function runBot() {
 			'reply_to_message_id': msg['message_id'],
 			'reply_markup': JSON.stringify({
 				keyboard: [
-					['Cat #1', 'Cat #2'],
-					['Cat #3', 'refill', 'Wallet']
+					['lol', 'refill', 'send (p2p)']
 				],
 			'one_time_keyboard': true
 			})
@@ -82,13 +82,46 @@ function runBot() {
 	});
 
 
-	bot.onText(/Wallet/,function (msg) {
+	bot.onText(/send \(p2p\)/,function (msg) {
 		var chatId = msg.chat.id;
-		// var scope = ['account-info', 'operation-history', 'payment-p2p'];
-		// var url = Wallet.buildObtainTokenUrl(config.applicationId, config.redirectURI  + '?chatId=' + chatId, scope);
-		// bot.sendMessage(chatId, 'Чуваааак, авторизуйся у меня [Я ссылко, жмякни на меня](' + url + ')', {
-		// 	'parse_mode': 'Markdown'
-		// });
+		var userId = msg.from.id;
+
+		p2pTokens.findOne({
+			userId: +userId
+		}, function(err, item) {
+			item.toArray().then(function(array) {
+				if (array.length) {
+					var accessToken = array[0].accessToken;
+					console.log('-----accessToken found--------');
+					console.log(array);
+
+					var options = {
+						bot: bot,
+						chatId: chatId,
+						accessToken: accessToken,
+						holdForPickup: false
+					};
+					p2p(options, function (err, data) {
+						console.log('-----------------requestComplete-----------------');
+						console.log(err);
+						console.log(data);
+						if (err) {
+							// process error
+						}
+						bot.sendMessage(chatId, 'Чувак, всё готово, проверяй');
+					});
+				} else {
+					console.log('-----accessToken not found--------');
+					var scope = ['account-info', 'operation-history', 'payment-p2p'];
+					var url = Wallet.buildObtainTokenUrl(config.applicationId,
+						config.redirectURI  + '?chatId=' + chatId + '&userId=' + userId,
+						scope);
+					bot.sendMessage(chatId, 'Чуваааак, авторизуйся у меня [Я ссылко, жмякни на меня](' + url + ')', {
+						'parse_mode': 'Markdown'
+					});
+				}
+			})
+		});
 		// startP2P('410013269422933', 0.02, chatId, accessToken);
 	});
 
@@ -227,53 +260,6 @@ function runBot() {
 		});
 	}
 
-
-	function startP2P(accountNumber, sum, chatId, accessToken) {
-		var api = new Wallet(accessToken);
-
-		//make request payment and process it
-		var requestOptions = {
-			"pattern_id": "p2p",
-			// "to": "410013269422933",
-			// "to": accountNumber,
-			"amount_due": sum,
-			"comment": "test payment comment from yandex-money-nodejs",
-			"message": "test payment message from yandex-money-nodejs",
-			"label": "testPayment"
-			// ,
-			// 'hold_for_pickup': true
-			// ,
-			// "test_payment": true,
-			// "test_result": "success"
-		};
-
-		api.requestPayment(requestOptions, function requestComplete(err, data) {
-			console.log('-----------------requestComplete-----------------');
-			console.log(err);
-			console.log(data);
-			if (err) {
-				// process error
-			}
-			if (data.status !== "success") {
-				// process failure
-			}
-			var requestId = data['request_id'];
-
-			// api.processPayment({
-			// 	"request_id": requestId
-			// 	}, processComplete);
-		});
-
-		function processComplete(err, data) {
-			console.log('-----------------requestComplete-----------------');
-			console.log(err);
-			console.log(data);
-			if (err) {
-				// process error
-			}
-			// process status
-		}
-	}
 }
 
 

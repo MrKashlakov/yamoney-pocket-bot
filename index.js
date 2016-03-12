@@ -6,6 +6,7 @@ var httpDispatcher = require('httpdispatcher');
 var yandexMoney = require('yandex-money-sdk');
 var config = require('./config');
 var Bot = require('./Bot');
+var p2p = require('./p2p');
 
 
 var dbName = 'easyway';
@@ -28,15 +29,44 @@ httpDispatcher.onGet('/', function (req, res) {
 		if (data.error) {
 			bot.sendMessage(query.chatId, data.error);
 		} else {
-			bot.sendMessage(query.chatId, 'Всё ок');
+			bot.sendMessage(query.chatId, 'Всё ок, ещё немного');
 		}
-		// var accessToken = data['access_token'];
-		// save it to DB, config, etc..
-		// TODO: save data.access_token to database please and notify to bot
+
+		var accessToken = data['access_token'];
+		var options = {
+			bot: bot,
+			chatId: query.chatId,
+			accessToken: accessToken,
+			holdForPickup: query.holdForPickup || false
+		};
+
+		var userId = query.userId;
+		p2pTokens
+			.insert({
+				userId: +userId,
+				accessToken: accessToken,
+				created: Math.floor(Date.now() / 1000)
+			})
+			.then(function(result) {
+				console.log(result.insertedIds);
+			})
+			.catch(function(err) {
+				console.log(err);
+			});
+
+		p2p(options, function (err, data) {
+			console.log('-----------------requestComplete-----------------');
+			console.log(err);
+			console.log(data);
+			if (err) {
+				// process error
+			}
+			bot.sendMessage(query.chatId, 'Чувак, всё готово, проверяй');
+		});
 	};
 
 	if (query && query.code) {
-		console.log(query)
+		console.log(query);
 		yandexMoney.Wallet.getAccessToken(config.applicationId, query.code, config.redirectURI, config.applicationSecret,
 				saveTokenToDataBase);
 		res.writeHead(200, {'ContentType': 'text/plain'});

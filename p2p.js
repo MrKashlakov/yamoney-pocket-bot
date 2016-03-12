@@ -31,18 +31,40 @@ function p2pHandler(options, processComplete) {
 			var messageId = sended['message_id'];
 			bot.onReplyToMessage(chatId, messageId, function (msg) {
 				msg = msg.text.split(' ');
-				console.log(msg)
 				var to = msg[0];
 				var sum = msg[1];
 
-				startP2P({
-					bot: bot,
-					to: to,
-					sum: sum,
-					chatId: chatId,
-					accessToken: accessToken,
-					holdForPickup: holdForPickup
-				}, processComplete);
+				if (sum) {
+					startP2P({
+						bot: bot,
+						to: to,
+						sum: sum,
+						chatId: chatId,
+						accessToken: accessToken,
+						holdForPickup: true
+					}, processComplete);
+				} else {
+					bot.sendMessage(chatId, 'Введите сумму перевода (с вашего счета спишется эта сумма, '
+						+ 'плюс комиссия за перевод)', forceReplyOpts)
+					.then(function (sended) {
+							var chatId = sended.chat.id;
+							var messageId = sended['message_id'];
+							bot.onReplyToMessage(chatId, messageId, function (sum) {
+								sum = sum.text;
+								// Начинаем платёж
+
+								startP2P({
+									bot: bot,
+									to: to,
+									sum: sum,
+									chatId: chatId,
+									accessToken: accessToken,
+									holdForPickup: true
+								}, processComplete);
+							});
+						});
+				}
+
 			});
 		});
 	} else {
@@ -69,7 +91,7 @@ function p2pHandler(options, processComplete) {
 								sum: sum,
 								chatId: chatId,
 								accessToken: accessToken,
-								holdForPickup: holdForPickup
+								holdForPickup: true
 							}, processComplete);
 						});
 					});
@@ -97,12 +119,9 @@ function startP2P(options, processComplete) {
 		"pattern_id": "p2p",
 		"to": options.to,
 		"amount_due": options.sum,
-		// "comment": "test payment comment from yandex-money-nodejs",
-		// "message": "test payment message from yandex-money-nodejs",
 		"label": "testPayment",
-		"hold_for_pickup": options.holdForPickup
+		"hold_for_pickup": true
 	};
-	console.log(requestOptions)
 
 	api.requestPayment(requestOptions, function requestComplete(err, data) {
 		console.log('-----------------requestComplete-----------------');

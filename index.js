@@ -28,6 +28,21 @@ bot.on('message', function (msg) {
 	console.log(msg);
 });
 
+bot.onText(/\/?start$/i, function(msg) {
+	var chatId = msg.chat.id;
+	bot.sendMessage(chatId, 'Приветствие');
+});
+
+bot.onText(/\/?help$/i, function(msg) {
+	var chatId = msg.chat.id;
+	bot.sendMessage(chatId, 'Помощь');
+});
+
+bot.onText(/\/?settings$/i, function(msg) {
+	var chatId = msg.chat.id;
+	bot.sendMessage(chatId, 'Какие-нибудь настройки');
+});
+
 bot.onText(/\/cat/, function (msg) {
 	var chatId = msg.chat.id;
 	var opts = {
@@ -69,11 +84,18 @@ bot.onText(/Wallet/,function (msg) {
 	bot.sendMessage(chatId, 'Чуваааак, авторизуйся у меня [Я ссылко, жмякни на меня](' + url + ')', {
 		'parse_mode': 'Markdown'
 	});
-	// Wallet.getAccessToken(config.applicationId, 'code', config.redirectURI, scope, function() {
+
+	// Меняем на постоянный токен
+	// Wallet.getAccessToken(config.applicationId, 'code', config.redirectURI, scope, function(err, data) {
 	// 	console.log('------------------getAccessToken---------------');
 	// 	console.log(response.statusCode);
 	// 	console.log(data.status);
 	// 	console.log(data);
+	// 	if(err) {
+	// 		// process error
+	// 	}
+	// 	var accessToken = data['access_token'];
+	// 	// save it to DB, config, etc..
 	// });
 });
 

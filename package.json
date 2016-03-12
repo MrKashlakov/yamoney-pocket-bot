@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "httpdispatcher": "^1.0.0",
+    "mongodb-promises": "^0.2.0",
     "node-telegram-bot-api": "^0.20.1",
     "yandex-money-sdk": "^0.1.6"
   },

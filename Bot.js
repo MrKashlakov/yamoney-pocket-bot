@@ -4,13 +4,18 @@ var config = require('./config');
 var Wallet = yandexMoney.Wallet;
 var ExternalPayment = yandexMoney.ExternalPayment;
 
+var dbName = 'easyway';
+var db = require('mongodb-promises').db('localhost:27017', dbName);
+var p2pTokens = db.collection('p2p_tokens');
+var externalTokens = db.collection('external_tokens');
+
+
 // Опции для ожидания ответа
 var forceReplyOpts = {
 	'reply_markup': JSON.stringify({
 		'force_reply': true
 	})
 };
-
 
 function runBot() {
 	// Setup polling way
@@ -90,155 +95,174 @@ function runBot() {
 	bot.onText(/refill/, refillHandler);
 
 	return bot;
-}
 
-function refillHandler(msg) {
-	var chatId = msg.chat.id;
-	bot.sendMessage(chatId, 'Вы выбрали опцию пополнения кошелька. '
-			+ 'Пожалуйста, введите номер кошелька, который хотите пополнить', forceReplyOpts)
-	.then(function (sended) {
-		var chatId = sended.chat.id;
-		var messageId = sended['message_id'];
-		bot.onReplyToMessage(chatId, messageId, function (accountNumber) {
-			accountNumber = accountNumber.text;
-			// TODO проверки всякие для accountNumber и если всё ок, то запрашиваем сумму
-			bot.sendMessage(chatId, 'Вы хотите пополнить кошелек ' + accountNumber
-					+ '. Теперь введите сумму, пожалуйста', forceReplyOpts)
-			.then(function (sended) {
-					var chatId = sended.chat.id;
-					var messageId = sended['message_id'];
-					bot.onReplyToMessage(chatId, messageId, function (sum) {
-						sum = sum.text;
-						// TODO проверки всякие для accountNumber и если всё ок, то запрашиваем сумму
-						bot.sendMessage(chatId, 'Итак, вы хотите пополнить аккаунт на сумму '
-							+ sum + '. Начинаем формировать ссылку на пополнение ;)');
+	function refillHandler(msg) {
+		var chatId = msg.chat.id;
+		var userId = msg.from.id;
+		bot.sendMessage(chatId, 'Вы выбрали опцию пополнения кошелька. '
+				+ 'Пожалуйста, введите номер кошелька, который хотите пополнить', forceReplyOpts)
+		.then(function (sended) {
+			var chatId = sended.chat.id;
+			var messageId = sended['message_id'];
+			bot.onReplyToMessage(chatId, messageId, function (accountNumber) {
+				accountNumber = accountNumber.text;
+				// TODO проверки всякие для accountNumber и если всё ок, то запрашиваем сумму
+				bot.sendMessage(chatId, 'Вы хотите пополнить кошелек ' + accountNumber
+						+ '. Теперь введите сумму, пожалуйста', forceReplyOpts)
+				.then(function (sended) {
+						var chatId = sended.chat.id;
+						var messageId = sended['message_id'];
+						bot.onReplyToMessage(chatId, messageId, function (sum) {
+							sum = sum.text;
+							// TODO проверки всякие для accountNumber и если всё ок, то запрашиваем сумму
+							bot.sendMessage(chatId, 'Итак, вы хотите пополнить аккаунт на сумму '
+								+ sum + '. Начинаем формировать ссылку на пополнение ;)');
 
-						startAccountRefill(accountNumber, sum, chatId);
+							startAccountRefill(accountNumber, sum, chatId, userId);
+						});
 					});
-				});
-		});
-	});
-}
-
-function startAccountRefill(accountNumber, sum, chatId) {
-	var requestId = null;
-	var instanceId = null;
-
-	// getInstanceId
-	ExternalPayment.getInstanceId(config.applicationId, function(error, data, response) {
-		console.log('-----------------getInstanceId-----------------');
-		console.log(response.statusCode);
-		console.log(data.status);
-		console.log(data);
-
-		if (data.status === 'success') {
-			instanceId = data['instance_id'];
-
-			var requestOptions = {
-				"pattern_id": "p2p",
-				// "to": "410013269422933",
-				"to": accountNumber,
-				"amount_due": sum,
-				"comment": "test payment comment from yandex-money-nodejs",
-				"message": "test payment message from yandex-money-nodejs",
-				"label": "testPayment"
-				// ,
-				// "test_payment": true,
-				// "test_result": "success"
-			};
-			var api = new ExternalPayment(instanceId);
-
-			api.request(requestOptions, function (error, data, response) {
-				console.log('-----------------requestComplete-----------------');
-				console.log(response.statusCode);
-				console.log(data.status);
-				console.log(data);
-				requestId = data['request_id'];
-
-				api.process({
-					"request_id": requestId,
-					'ext_auth_success_uri': config.redirectURI,
-					'ext_auth_fail_uri': config.redirectURI
-				}, function (err, data) {
-					console.log('-----------------process-----------------');
-					console.log(data);
-					if (err) {
-						console.log('err');
-					// process error
-					}
-					// process data
-					if (data.status === 'ext_auth_required') {
-						var params = [];
-						var acsParams = data['acs_params'];
-
-						for (var prop in acsParams) {
-							if (acsParams.hasOwnProperty(prop)) {
-								params.push(prop + '=' + acsParams[prop]);
-							}
-						}
-
-						var url = data['acs_uri'];
-
-						if (params.length) {
-							url += '?' + params.join('&');
-						}
-						bot.sendMessage(chatId, 'Если вы готовы пополнить мне счет, перейдите, пожалуйста по ссылке ' + url);
-					} else {
-						bot.sendMessage(chatId, 'Что-то пошло не так. Возможно, вы неправильно '
-								+ 'указали номер счёта для пополнения. Попробуйте начать заново.');
-					}
-				});
 			});
+		});
+	}
+
+	function startAccountRefill(accountNumber, sum, chatId, userId) {
+		var instanceId;
+
+		externalTokens.findOne({
+			userId: +userId
+		}, function(err, item) {
+			item.toArray().then(function(array) {
+				if (array.length) {
+					instanceId = array[0];
+					console.log('-----userToken found--------');
+					console.log(array);
+					reffilAccount(instanceId, accountNumber, sum, chatId);
+				} else {
+					console.log('-----userToken not found--------');
+					// getInstanceId
+					ExternalPayment.getInstanceId(config.applicationId, function(error, data, response) {
+						console.log('-----------------getInstanceId-----------------');
+						console.log(response.statusCode);
+						console.log(data.status);
+						console.log(data);
+
+						if (data.status === 'success') {
+							instanceId = data['instance_id'];
+							reffilAccount(instanceId, accountNumber, sum, chatId);
+						}
+					});
+				}
+			});
+		});
+
+	}
+
+	function reffilAccount(instanceId, accountNumber, sum, chatId) {
+		var requestOptions = {
+			"pattern_id": "p2p",
+			// "to": "410013269422933",
+			"to": accountNumber,
+			"amount_due": sum,
+			"comment": "test payment comment from yandex-money-nodejs",
+			"message": "test payment message from yandex-money-nodejs",
+			"label": "testPayment"
+			// ,
+			// "test_payment": true,
+			// "test_result": "success"
+		};
+		var api = new ExternalPayment(instanceId);
+
+		api.request(requestOptions, function (error, data, response) {
+			console.log('-----------------requestComplete-----------------');
+			console.log(response.statusCode);
+			console.log(data.status);
+			console.log(data);
+			var requestId = data['request_id'];
+
+			api.process({
+				"request_id": requestId,
+				'ext_auth_success_uri': config.redirectURI,
+				'ext_auth_fail_uri': config.redirectURI
+			}, function (err, data) {
+				console.log('-----------------process-----------------');
+				console.log(data);
+				if (err) {
+					console.log('err');
+				// process error
+				}
+				// process data
+				if (data.status === 'ext_auth_required') {
+					var params = [];
+					var acsParams = data['acs_params'];
+
+					for (var prop in acsParams) {
+						if (acsParams.hasOwnProperty(prop)) {
+							params.push(prop + '=' + acsParams[prop]);
+						}
+					}
+
+					var url = data['acs_uri'];
+
+					if (params.length) {
+						url += '?' + params.join('&');
+					}
+					bot.sendMessage(chatId, 'Если вы готовы пополнить мне счет, перейдите, пожалуйста по ссылке ' + url);
+				} else {
+					bot.sendMessage(chatId, 'Что-то пошло не так. Возможно, вы неправильно '
+							+ 'указали номер счёта для пополнения. Попробуйте начать заново.');
+				}
+			});
+		});
+	}
+
+
+	function startP2P(accountNumber, sum, chatId, accessToken) {
+		var api = new Wallet(accessToken);
+
+		//make request payment and process it
+		var requestOptions = {
+			"pattern_id": "p2p",
+			// "to": "410013269422933",
+			// "to": accountNumber,
+			"amount_due": sum,
+			"comment": "test payment comment from yandex-money-nodejs",
+			"message": "test payment message from yandex-money-nodejs",
+			"label": "testPayment"
+			// ,
+			// 'hold_for_pickup': true
+			// ,
+			// "test_payment": true,
+			// "test_result": "success"
+		};
+
+		api.requestPayment(requestOptions, function requestComplete(err, data) {
+			console.log('-----------------requestComplete-----------------');
+			console.log(err);
+			console.log(data);
+			if (err) {
+				// process error
+			}
+			if (data.status !== "success") {
+				// process failure
+			}
+			var requestId = data['request_id'];
+
+			// api.processPayment({
+			// 	"request_id": requestId
+			// 	}, processComplete);
+		});
+
+		function processComplete(err, data) {
+			console.log('-----------------requestComplete-----------------');
+			console.log(err);
+			console.log(data);
+			if (err) {
+				// process error
+			}
+			// process status
 		}
-	});
-}
-
-
-function startP2P(accountNumber, sum, chatId, accessToken) {
-	var api = new Wallet(accessToken);
-
-	//make request payment and process it
-	var requestOptions = {
-		"pattern_id": "p2p",
-		// "to": "410013269422933",
-		// "to": accountNumber,
-		"amount_due": sum,
-		"comment": "test payment comment from yandex-money-nodejs",
-		"message": "test payment message from yandex-money-nodejs",
-		"label": "testPayment"
-		// ,
-		// 'hold_for_pickup': true
-		// ,
-		// "test_payment": true,
-		// "test_result": "success"
-	};
-
-	api.requestPayment(requestOptions, function requestComplete(err, data) {
-		console.log('-----------------requestComplete-----------------');
-		console.log(err);
-		console.log(data);
-		if (err) {
-			// process error
-		}
-		if (data.status !== "success") {
-			// process failure
-		}
-		var requestId = data['request_id'];
-
-		// api.processPayment({
-		// 	"request_id": requestId
-		// 	}, processComplete);
-	});
-
-	function processComplete(err, data) {
-		console.log('-----------------requestComplete-----------------');
-		console.log(err);
-		console.log(data);
-		if(err) {
-			// process error
-		}
-		// process status
 	}
 }
+
 
 module.exports = runBot;

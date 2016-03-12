@@ -7,6 +7,13 @@ var yandexMoney = require('yandex-money-sdk');
 var config = require('./config');
 var Bot = require('./Bot');
 
+
+var dbName = 'easyway';
+
+var db = require('mongodb-promises').db('localhost:27017', dbName);
+var p2pTokens = db.collection('p2p_tokens');
+var externalTokens = db.collection('external_tokens');
+
 // Setup polling way
 var bot = Bot();
 

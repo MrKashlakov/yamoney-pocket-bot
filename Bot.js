@@ -133,7 +133,7 @@ function runBot() {
 		}, function(err, item) {
 			item.toArray().then(function(array) {
 				if (array.length) {
-					instanceId = array[0];
+					instanceId = array[0].instanceId;
 					console.log('-----userToken found--------');
 					console.log(array);
 					reffilAccount(instanceId, accountNumber, sum, chatId);

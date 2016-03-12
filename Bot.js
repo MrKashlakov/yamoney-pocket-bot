@@ -33,6 +33,23 @@ function runBot() {
 	// Отладочная информация
 	bot.on('message', function (msg) {
 		console.log(msg);
+
+		if (msg.sticker) {
+			switch (msg.sticker['file_id']) {
+				case 'BQADAgADNAADJ8sDAAHyUy3r2FUZFwI': {
+					phoneHandler(msg);
+					break;
+				}
+				case 'BQADAgADMAADJ8sDAAFmSLfHZ124IwI': {
+					p2pHandler(msg);
+					break;
+				}
+				case 'BQADAgADMgADJ8sDAAGF8UjLWkYJcgI': {
+					refillHandler(msg);
+					break;
+				}
+			}
+		}
 	});
 
 	bot.onText(/\/?start$/i, function(msg) {
@@ -49,7 +66,7 @@ function runBot() {
 		bot.sendMessage(chatId, 'Помощь');
 	});
 
-	bot.onText(/\/?phone$/i, function(msg) {
+	function phoneHandler(msg) {
 		var chatId = msg.chat.id;
 		var userId = msg.from.id;
 
@@ -82,13 +99,18 @@ function runBot() {
 					var url = Wallet.buildObtainTokenUrl(config.applicationId,
 						config.redirectURI  + '?chatId=' + chatId + '&userId=' + userId + '&operation=phone',
 						scope);
-					bot.sendMessage(chatId, 'Чуваааак, авторизуйся у меня [Я ссылко, жмякни на меня](' + url + ')', {
+					bot.sendMessage(chatId, 'Вы собираетесь выполнить перевод со счета в Яндекс.Деньги,'
+							+ ' для этого потребуется привязать меня к вашему счету, только так я смогу помогать'
+							+ ' вам с переводами. [Вот ссылка по которой нужно перейти](' + url + '). Обратите внимание что вы '
+							+ 'попадете на сайт Яндекс.Денег, если нет, значит меня взломали :((', {
 						'parse_mode': 'Markdown'
 					});
 				}
 			});
 		});
-	});
+	}
+
+	bot.onText(/\/?phone$/i, phoneHandler);
 
 	bot.onText(/\/cat/, function (msg) {
 		var chatId = msg.chat.id;
@@ -122,8 +144,7 @@ function runBot() {
 		bot.sendSticker(chatId, 'BQADAgADZgEAAvR7GQABEYHZ8mAQ8ncC');
 	});
 
-
-	bot.onText(/send \(p2p\)/,function (msg) {
+	function p2pHandler(msg) {
 		var chatId = msg.chat.id;
 		var userId = msg.from.id;
 
@@ -163,7 +184,9 @@ function runBot() {
 				}
 			});
 		});
-	});
+	}
+
+	bot.onText(/send \(p2p\)/, p2pHandler);
 
 	bot.onText(/refill/, refillHandler);
 
@@ -245,15 +268,11 @@ function runBot() {
 	function reffilAccount(instanceId, accountNumber, sum, chatId) {
 		var requestOptions = {
 			"pattern_id": "p2p",
-			// "to": "410013269422933",
 			"to": accountNumber,
 			"amount_due": sum,
 			"comment": "test payment comment from yandex-money-nodejs",
 			"message": "test payment message from yandex-money-nodejs",
 			"label": "testPayment"
-			// ,
-			// "test_payment": true,
-			// "test_result": "success"
 		};
 		var api = new ExternalPayment(instanceId);
 

@@ -15,6 +15,7 @@ var forceReplyOpts = {
  * @param {String} options.accessToken
  * @param {String} options.holdForPickup
  * @param {Boolan} options.twice Уже не первый раз
+ * @param {Boolan} options.machineOn
  * @param {Function} processComplete callback
  */
 function p2pHandler(options, processComplete) {
@@ -24,49 +25,87 @@ function p2pHandler(options, processComplete) {
 	var holdForPickup = options.holdForPickup;
 
 	if (options.twice) {
-		bot.sendMessage(chatId, 'Готов снова помочь вам с переводом, просто введите куда'
-								+ ' отправить деньги, и через пробел введите сумму', forceReplyOpts)
-		.then(function (sended) {
-			var chatId = sended.chat.id;
-			var messageId = sended['message_id'];
-			bot.onReplyToMessage(chatId, messageId, function (msg) {
-				msg = msg.text.split(' ');
-				var to = msg[0];
-				var sum = msg[1];
 
-				if (sum) {
-					startP2P({
-						bot: bot,
-						to: to,
-						sum: sum,
-						chatId: chatId,
-						accessToken: accessToken,
-						holdForPickup: true
-					}, processComplete);
-				} else {
-					bot.sendMessage(chatId, 'Введите сумму перевода (с вашего счета спишется эта сумма, '
-						+ 'плюс комиссия за перевод)', forceReplyOpts)
-					.then(function (sended) {
-							var chatId = sended.chat.id;
-							var messageId = sended['message_id'];
-							bot.onReplyToMessage(chatId, messageId, function (sum) {
-								sum = sum.text;
-								// Начинаем платёж
+		if (options.machineOn) {
+			msg = msg.text.split(' ');
+			var to = msg[0];
+			var sum = msg[1];
 
-								startP2P({
-									bot: bot,
-									to: to,
-									sum: sum,
-									chatId: chatId,
-									accessToken: accessToken,
-									holdForPickup: true
-								}, processComplete);
-							});
+			if (sum) {
+				startP2P({
+					bot: bot,
+					to: to,
+					sum: sum,
+					chatId: chatId,
+					accessToken: accessToken,
+					holdForPickup: true
+				}, processComplete);
+			} else {
+				bot.sendMessage(chatId, 'Введите сумму перевода (с вашего счета спишется эта сумма, '
+					+ 'плюс комиссия за перевод)', forceReplyOpts)
+				.then(function (sended) {
+						var chatId = sended.chat.id;
+						var messageId = sended['message_id'];
+						bot.onReplyToMessage(chatId, messageId, function (sum) {
+							sum = sum.text;
+							// Начинаем платёж
+
+							startP2P({
+								bot: bot,
+								to: to,
+								sum: sum,
+								chatId: chatId,
+								accessToken: accessToken,
+								holdForPickup: true
+							}, processComplete);
 						});
-				}
+					});
+			}
+		} else {
+			bot.sendMessage(chatId, 'Готов снова помочь вам с переводом, просто введите куда'
+									+ ' отправить деньги, и через пробел введите сумму', forceReplyOpts)
+			.then(function (sended) {
+				var chatId = sended.chat.id;
+				var messageId = sended['message_id'];
+				bot.onReplyToMessage(chatId, messageId, function (msg) {
+					msg = msg.text.split(' ');
+					var to = msg[0];
+					var sum = msg[1];
 
+					if (sum) {
+						startP2P({
+							bot: bot,
+							to: to,
+							sum: sum,
+							chatId: chatId,
+							accessToken: accessToken,
+							holdForPickup: true
+						}, processComplete);
+					} else {
+						bot.sendMessage(chatId, 'Введите сумму перевода (с вашего счета спишется эта сумма, '
+							+ 'плюс комиссия за перевод)', forceReplyOpts)
+						.then(function (sended) {
+								var chatId = sended.chat.id;
+								var messageId = sended['message_id'];
+								bot.onReplyToMessage(chatId, messageId, function (sum) {
+									sum = sum.text;
+									// Начинаем платёж
+
+									startP2P({
+										bot: bot,
+										to: to,
+										sum: sum,
+										chatId: chatId,
+										accessToken: accessToken,
+										holdForPickup: true
+									}, processComplete);
+								});
+							});
+					}
+
+				});
 			});
-		});
+		}
 	} else {
 		bot.sendMessage(chatId, 'Просто введите номер счёта получателя, '
 				+ 'его e-mail или номер телефона', forceReplyOpts)
@@ -122,6 +161,8 @@ function startP2P(options, processComplete) {
 		"label": "testPayment",
 		"hold_for_pickup": true
 	};
+
+	console.log(requestOptions)
 
 	api.requestPayment(requestOptions, function requestComplete(err, data) {
 		console.log('-----------------requestComplete-----------------');

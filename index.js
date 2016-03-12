@@ -30,9 +30,8 @@ httpDispatcher.onGet('/', function (req, res) {
 		if (data.error) {
 			bot.sendMessage(query.chatId, data.error);
 			return;
-		} else {
-			bot.sendMessage(query.chatId, 'Всё ок, ещё немного');
 		}
+
 
 		var accessToken = data['access_token'];
 		var userId = query.userId;
@@ -52,29 +51,39 @@ httpDispatcher.onGet('/', function (req, res) {
 
 		var operation = query.operation;
 
-		function onSuccess(err, data) {
-			console.log('-----------------requestComplete-----------------');
-			console.log(err);
-			console.log(data);
-			if (err) {
-				// process error
-			}
-			bot.sendMessage(query.chatId, 'Чувак, всё готово, проверяй');
-		}
-
 		if (operation === 'p2p') {
+			bot.sendMessage(query.chatId, 'Ура! Все получилось. Я могу перевести деньги на счёт в '
+				+ 'Яндекс.Деньгах, на адрес электронной почты или телефон. Кстати, получатель '
+				+ 'перевода может даже не знать про Яндекс.Деньги, просто введите его адрес '
+				+ 'электронной почты или номер телефона!');
 			p2p({
 				bot: bot,
 				chatId: query.chatId,
 				accessToken: accessToken,
 				holdForPickup: query.holdForPickup || false
-			}, onSuccess);
+			}, function (err, data) {
+				console.log('-----------------requestComplete-----------------');
+				console.log(err);
+				console.log(data);
+				if (err) {
+					bot.sendMessage(query.chatId, 'Что-то пошло не так. Мне не удалось отправить перевод, попробуем снова: /send ?');
+					return;
+				}
+				bot.sendMessage(query.chatId, 'Ваши деньги успешно отправлены получателю, '
+						+ 'был рад помочь!');
+			});
 		} else {
 			phone({
 				bot: bot,
 				chatId: query.chatId,
 				accessToken: accessToken
-			}, onSuccess);
+			}, function (err, data) {
+				console.log('-----------------requestComplete-----------------');
+				console.log(err);
+				console.log(data);
+				// bot.sendMessage(query.chatId, 'Ваши деньги успешно отправлены получателю, '
+						// + 'был рад помочь!');
+			});
 		}
 
 	};

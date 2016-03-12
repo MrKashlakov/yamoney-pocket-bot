@@ -59,11 +59,50 @@ function runBot() {
 				+ 'Я умею переводить деньги вашим друзьям.\n'
 				+ 'Я умею пополнять ваш счет в Яндекс.Деньги.\n'
 				+ 'Я смогу пополнить ваш сотовый, а ещё я всегда у вас под рукой!');
+		var opts = {
+			'reply_to_message_id': msg['message_id'],
+			'reply_markup': JSON.stringify({
+				keyboard: [
+					['phone', 'refill', 'send (p2p)']
+				],
+			'one_time_keyboard': true
+			})
+		};
+		bot.sendMessage(chatId, '', opts);
+	});
+
+
+	bot.onText(/\/cats/, function (msg) {
+		var chatId = msg.chat.id;
+		var opts = {
+			'reply_to_message_id': msg['message_id'],
+			'reply_markup': JSON.stringify({
+				keyboard: [
+					['Cat #1', 'Cat #2', 'Cat #3']
+				],
+			'one_time_keyboard': true
+			})
+		};
+		bot.sendMessage(chatId, 'Choose your cat?', opts);
 	});
 
 	bot.onText(/\/?help$/i, function(msg) {
 		var chatId = msg.chat.id;
-		bot.sendMessage(chatId, 'Помощь');
+		bot.sendMessage(chatId, '/start - информация обо мне\n'
+			+ '/help - справка\n'
+			+ '/phone - пополнение счёта мобильного телефона.\n'
+			+ '/refill - пополнение своего счёта в системе '
+			+ 'Яндекс.Деньги с любой карты.\n'
+			+ '/send - перевод на номер счёта в Яндекс.Деньги по номеру телефона или '
+			+ 'адресу электронной почты, даже если получатель перевода не зарегистрирован '
+			+ 'в системе Яндекс.Деньги.\n\n'
+			+ 'Все платёжные операции выполняются через сайт '
+			+ '[Яндекс.Деньги](' + 'https://money.yandex.ru/' + ')'
+			+ '. Бот никогда не попросит ввести данные вашей банковской карты, все данные '
+			+ 'карты обрабатываются на сайте Яндекс.Деньги. Остерегайтесь мошенников.', {
+				'parse_mode': 'Markdown'
+			}
+		);
 	});
 
 	function phoneHandler(msg) {
@@ -99,10 +138,8 @@ function runBot() {
 					var url = Wallet.buildObtainTokenUrl(config.applicationId,
 						config.redirectURI  + '?chatId=' + chatId + '&userId=' + userId + '&operation=phone',
 						scope);
-					bot.sendMessage(chatId, 'Вы собираетесь выполнить перевод со счета в Яндекс.Деньги,'
-							+ ' для этого потребуется привязать меня к вашему счету, только так я смогу помогать'
-							+ ' вам с переводами. [Вот ссылка по которой нужно перейти](' + url + '). Обратите внимание что вы '
-							+ 'попадете на сайт Яндекс.Денег, если нет, значит меня взломали :((', {
+					bot.sendMessage(chatId, 'Чтобы выполнить перевод со счёта в Яндекс.Деньги, потребуется привязать '
+							+ 'меня к вашему счету. Для этого перейдите по [ссылке](' + url + ').', {
 						'parse_mode': 'Markdown'
 					});
 				}
@@ -111,21 +148,6 @@ function runBot() {
 	}
 
 	bot.onText(/\/?phone$/i, phoneHandler);
-
-	bot.onText(/\/cat/, function (msg) {
-		var chatId = msg.chat.id;
-		var opts = {
-			'reply_to_message_id': msg['message_id'],
-			'reply_markup': JSON.stringify({
-				keyboard: [
-					['phone', 'refill', 'send (p2p)']
-				],
-			'one_time_keyboard': true
-			})
-		};
-		bot.sendMessage(chatId, 'Choose your cat?', opts);
-	});
-
 
 	bot.onText(/Cat #1/,function (msg) {
 		var chatId = msg.chat.id;
@@ -161,16 +183,20 @@ function runBot() {
 						bot: bot,
 						chatId: chatId,
 						accessToken: accessToken,
-						holdForPickup: false
+						holdForPickup: false,
+						twice: true
 					};
+
 					p2p(options, function (err, data) {
 						console.log('-----------------requestComplete-----------------');
 						console.log(err);
 						console.log(data);
 						if (err) {
+							bot.sendMessage(chatId, 'Что-то пошло не так. Мне не удалось отправить перевод, попробуем снова: /send ?');
 							// process error
+						} else {
+							bot.sendMessage(chatId, 'Ваши деньги успешно отправлены получателю, был рад помочь!');
 						}
-						bot.sendMessage(chatId, 'Чувак, всё готово, проверяй');
 					});
 				} else {
 					console.log('-----accessToken not found--------');
@@ -178,7 +204,8 @@ function runBot() {
 					var url = Wallet.buildObtainTokenUrl(config.applicationId,
 						config.redirectURI  + '?chatId=' + chatId + '&userId=' + userId + '&operation=p2p',
 						scope);
-					bot.sendMessage(chatId, 'Чуваааак, авторизуйся у меня [Я ссылко, жмякни на меня](' + url + ')', {
+					bot.sendMessage(chatId, 'Чтобы выполнить перевод со счёта в Яндекс.Деньги, потребуется привязать '
+							+ 'меня к вашему счету. Для этого перейдите по [ссылке](' + url + ').', {
 						'parse_mode': 'Markdown'
 					});
 				}

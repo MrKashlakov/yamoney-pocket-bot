@@ -4,6 +4,7 @@ var config = require('./config');
 var Wallet = yandexMoney.Wallet;
 var ExternalPayment = yandexMoney.ExternalPayment;
 var p2p = require('./p2p');
+var phone = require('./phone');
 
 var dbName = 'easyway';
 var db = require('mongodb-promises').db('localhost:27017', dbName);
@@ -46,7 +47,43 @@ function runBot() {
 
 	bot.onText(/\/?phone$/i, function(msg) {
 		var chatId = msg.chat.id;
-		bot.sendMessage(chatId, 'phone');
+		var userId = msg.from.id;
+
+		p2pTokens.findOne({
+			userId: +userId
+		}, function(err, item) {
+			item.toArray().then(function(array) {
+				if (array.length) {
+					var accessToken = array[0].accessToken;
+					console.log('-----accessToken found--------');
+					console.log(array);
+
+					var options = {
+						bot: bot,
+						chatId: chatId,
+						accessToken: accessToken
+					};
+					phone(options, function (err, data) {
+						console.log('-----------------requestComplete-----------------');
+						console.log(err);
+						console.log(data);
+						if (err) {
+							// process error
+						}
+						bot.sendMessage(chatId, 'Чувак, всё готово, проверяй');
+					});
+				} else {
+					console.log('-----accessToken not found--------');
+					var scope = ['account-info', 'operation-history', 'payment-p2p'];
+					var url = Wallet.buildObtainTokenUrl(config.applicationId,
+						config.redirectURI  + '?chatId=' + chatId + '&userId=' + userId + '&operation=phone',
+						scope);
+					bot.sendMessage(chatId, 'Чуваааак, авторизуйся у меня [Я ссылко, жмякни на меня](' + url + ')', {
+						'parse_mode': 'Markdown'
+					});
+				}
+			});
+		});
 	});
 
 	bot.onText(/\/cat/, function (msg) {
@@ -114,15 +151,14 @@ function runBot() {
 					console.log('-----accessToken not found--------');
 					var scope = ['account-info', 'operation-history', 'payment-p2p'];
 					var url = Wallet.buildObtainTokenUrl(config.applicationId,
-						config.redirectURI  + '?chatId=' + chatId + '&userId=' + userId,
+						config.redirectURI  + '?chatId=' + chatId + '&userId=' + userId + '&operation=p2p',
 						scope);
 					bot.sendMessage(chatId, 'Чуваааак, авторизуйся у меня [Я ссылко, жмякни на меня](' + url + ')', {
 						'parse_mode': 'Markdown'
 					});
 				}
-			})
+			});
 		});
-		// startP2P('410013269422933', 0.02, chatId, accessToken);
 	});
 
 	bot.onText(/refill/, refillHandler);

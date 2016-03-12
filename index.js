@@ -7,6 +7,7 @@ var yandexMoney = require('yandex-money-sdk');
 var config = require('./config');
 var Bot = require('./Bot');
 var p2p = require('./p2p');
+var phone = require('./phone');
 
 
 var dbName = 'easyway';
@@ -35,13 +36,6 @@ httpDispatcher.onGet('/', function (req, res) {
 
 		var accessToken = data['access_token'];
 		var userId = query.userId;
-		var options = {
-			bot: bot,
-			chatId: query.chatId,
-			accessToken: accessToken,
-			holdForPickup: query.holdForPickup || false
-		};
-
 
 		p2pTokens
 			.insert({
@@ -56,7 +50,9 @@ httpDispatcher.onGet('/', function (req, res) {
 				console.log(err);
 			});
 
-		p2p(options, function (err, data) {
+		var operation = query.operation;
+
+		function onSuccess(err, data) {
 			console.log('-----------------requestComplete-----------------');
 			console.log(err);
 			console.log(data);
@@ -64,7 +60,23 @@ httpDispatcher.onGet('/', function (req, res) {
 				// process error
 			}
 			bot.sendMessage(query.chatId, 'Чувак, всё готово, проверяй');
-		});
+		}
+
+		if (operation === 'p2p') {
+			p2p({
+				bot: bot,
+				chatId: query.chatId,
+				accessToken: accessToken,
+				holdForPickup: query.holdForPickup || false
+			}, onSuccess);
+		} else {
+			phone({
+				bot: bot,
+				chatId: query.chatId,
+				accessToken: accessToken
+			}, onSuccess);
+		}
+
 	};
 
 	if (query && query.code) {

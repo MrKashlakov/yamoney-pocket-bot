@@ -148,6 +148,18 @@ function runBot() {
 
 						if (data.status === 'success') {
 							instanceId = data['instance_id'];
+							externalTokens
+								.insert({
+									userId: +userId,
+									instanceId: instanceId,
+									created: Math.floor(Date.now() / 1000)
+								})
+								.then(function(result) {
+									console.log(result.insertedIds);
+								})
+								.catch(function(err) {
+									console.log(err);
+								});
 							reffilAccount(instanceId, accountNumber, sum, chatId);
 						}
 					});

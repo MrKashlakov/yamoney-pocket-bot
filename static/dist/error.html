@@ -1,34 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>Flat UI Free 101 Template</title>
+    <title>Привязка не удалась</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Loading Bootstrap -->
-    <link href="/static/dist/css/vendor/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html {
+            font-size: 16px;
+            box-sizing: border-box;
+            font-family: 'Soleil', sans-serif;
+            -webkit-text-size-adjust: 100%
+            -ms-text-size-adjust: 100%;
+            height: 100%;
+        }
+        body {
+            color: #31425d;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 100;
+            line-height: 1.6rem;
+            -webkit-font-smoothing: antialiased;
+            -moz-font-smoothing: grayscale;
+            margin: 0;
+            box-sizing: inherit;
+            height: 100%;
+            background-color: #c0392b;
+        }
+        * {
+            box-sizing: inherit;
+        }
+        .container {
+            position: relative;
+            padding: 0 2.25rem;
+            margin-left: auto;
+            margin-right: auto;
+            float: none;
+        }
+        .container__wrapper {
+            height: 100%;
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -webkit-flex-direction: column;
+            -ms-flex-direction: column;
+            flex-direction: column;
+            -webkit-box-align: center;
+            -webkit-align-items: center;
+            -ms-flex-align: center;
+            align-items: center
+        }
+        .content {
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 20%;
+            float: none;
+        }
+        .content h1 {
+            font-size: 3em;
+            color: #fff;
+            text-align: center;
+        }
+        .secondary-header {
+            color: #fff;
+            display: block;
+            font-size: 1.375rem;
+            line-height: 1.35;
+            margin: .75rem auto;
+            max-width: 630px;
+            opacity: 1;
+            text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.12);
+            text-align: center;
+            font-weight: 300;
+        }
 
-    <!-- Loading Flat UI -->
-    <link href="/static/dist/css/flat-ui.min.css" rel="stylesheet">
+    </style>
 
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements. All other JS at the end of file. -->
-    <!--[if lt IE 9]>
-    <script src="js/vendor/html5shiv.js"></script>
-    <script src="js/vendor/respond.min.js"></script>
-    <![endif]-->
 </head>
 <body>
 <div class="container">
-    <h1>Hello, errro!</h1>
+    <div class="container__wrapper">
+        <div class="content">
+            <h1>Привязка не удалась.</h1>
+            <div class="secondary-header">
+                Вернитесь в Telegram и попробуйте привязать свой аккаунт к боту снова.
+            </div>
+        </div>
+    </div>
 </div>
-<!-- /.container -->
-
-
-<!-- jQuery (necessary for Flat UI's JavaScript plugins) -->
-<script src="/static/dist/js/vendor/jquery.min.js"></script>
-<!-- Include all compiled plugins (below), or include individual files as needed -->
-<script src="/static/dist/js/vendor/video.js"></script>
-<script src="/static/dist/js/flat-ui.min.js"></script>
-
 </body>
 </html>

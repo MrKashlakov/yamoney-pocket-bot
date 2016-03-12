@@ -53,7 +53,7 @@ function phoneHandler(options, processComplete) {
  * @param {Object} options
  * @param {Object} options.bot
  * @param {String} options.phone phone
- * @param {String} options.sum
+ * @param {String} options.amount
  * @param {String} options.chatId
  * @param {String} options.accessToken
  * @param {Function} processComplete callback
@@ -65,10 +65,8 @@ function startPhone(options, processComplete) {
 	var requestOptions = {
 		"pattern_id": "phone-topup",
 		"phone-number": options.phone,
-		"amount_due": options.sum
+		"amount": options.amount
 	};
-
-	console.log(requestOptions)
 
 	api.requestPayment(requestOptions, function requestComplete(err, data) {
 		console.log('-----------------requestComplete-----------------');

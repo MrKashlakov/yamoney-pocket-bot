@@ -106,7 +106,7 @@ function runBot() {
 		);
 	});
 
-	function phoneHandler(msg, machineOn) {
+	function phoneHandler(msg) {
 		var chatId = msg.chat.id;
 		var userId = msg.from.id;
 
@@ -122,8 +122,7 @@ function runBot() {
 					var options = {
 						bot: bot,
 						chatId: chatId,
-						accessToken: accessToken,
-						machineOn: machineOn
+						accessToken: accessToken
 					};
 					phone(options, function (err, data) {
 						console.log('-----------------requestComplete-----------------');
@@ -152,14 +151,6 @@ function runBot() {
 
 	bot.onText(/\/?phone$/i, phoneHandler);
 	bot.onText(/\/?Пополнить сотовый$/i, phoneHandler);
-	bot.onText(/\/?Пополнить сотовый\s.*(\s.*)?$/i, function(msg) {
-		msg.text = msg.text.replace('Пополнить сотовый ', '');
-		phoneHandler(msg, true);
-	});
-	bot.onText(/\/?На сотовый\s.*(\s.*)?$/i, function(msg) {
-		msg.text = msg.text.replace('На сотовый ', '');
-		phoneHandler(msg, true);
-	});
 
 	bot.onText(/Cat #1/,function (msg) {
 		var chatId = msg.chat.id;
@@ -178,7 +169,7 @@ function runBot() {
 		bot.sendSticker(chatId, 'BQADAgADZgEAAvR7GQABEYHZ8mAQ8ncC');
 	});
 
-	function p2pHandler(msg, machineOn) {
+	function p2pHandler(msg) {
 		var chatId = msg.chat.id;
 		var userId = msg.from.id;
 
@@ -196,8 +187,7 @@ function runBot() {
 						chatId: chatId,
 						accessToken: accessToken,
 						holdForPickup: false,
-						twice: true,
-						machineOn: machineOn
+						twice: true
 					};
 
 					p2p(options, function (err, data) {
@@ -226,89 +216,46 @@ function runBot() {
 		});
 	}
 
-	bot.onText(/send$/i, p2pHandler);
+	bot.onText(/send$/, p2pHandler);
 	bot.onText(/Перевести деньги$/i, p2pHandler);
-	bot.onText(/Переведи$/i, p2pHandler);
-	bot.onText(/Перевод$/i, p2pHandler);
-	bot.onText(/Отправить$/i, p2pHandler);
-	bot.onText(/Скинь$/i, p2pHandler);
-	bot.onText(/Отправь$/i, p2pHandler);
-	bot.onText(/Переведи на\s.*(\s.*)?$/i, function(msg){
-		msg.text = msg.text.replace('Переведи на ', '');
-		p2pHandler(msg, true);
-	});
-	bot.onText(/Переведи\s.*(\s.*)?$/i, function(msg){
-		msg.text = msg.text.replace('Переведи ', '');
-		p2pHandler(msg, true);
-	});
 
 	bot.onText(/refill$/, refillHandler);
 	bot.onText(/Пополнить счет$/i, refillHandler);
 	bot.onText(/Пополнить$/i, refillHandler);
 	bot.onText(/закинуть$/i, refillHandler);
-	bot.onText(/закинуть$/i, refillHandler);
-	bot.onText(/Пополни\s.*(\s.*)?$/i, function(msg) {
-		msg.text = msg.text.replace('Пополни ', '');
-		refillHandler(msg, true);
-	});
-	bot.onText(/Закинь\s.*(\s.*)?$/i, function(msg) {
-		msg.text = msg.text.replace('Закинь ', '');
-		refillHandler(msg, true);
-	});
 
 	return bot;
 
-	function refillHandler(msg, machineOn) {
+	function refillHandler(msg) {
 		var chatId = msg.chat.id;
 		var userId = msg.from.id;
+		bot.sendMessage(chatId, 'Я умею пополнять любой счет в Яндекс.Деньгах с вашей карты. '
+					+ 'Хочу напомнить, что вводить данные карты вам придется на сайте Яндекс.Денег, '
+					+ 'если это не так - я не настоящий! Пожалуйста введите номер счета, которы мы '
+					+ 'должны пополнить, а через пробел сумму пополнения', forceReplyOpts)
+		.then(function (sended) {
+			var chatId = sended.chat.id;
+			var messageId = sended['message_id'];
+			bot.onReplyToMessage(chatId, messageId, function (msg) {
+				msg = msg.text.split(' ');
+				var accountNumber = msg[0];
+				var sum = msg[1];
 
-		if (machineOn) {
-			msg = msg.text.split(' ');
-			var accountNumber = msg[0];
-			var sum = msg[1];
-
-			if (sum) {
-				startAccountRefill(accountNumber, sum, chatId, userId);
-			} else {
-				bot.sendMessage(chatId, 'Теперь введите сумму, пожалуйста', forceReplyOpts)
-				.then(function (sended) {
-						var chatId = sended.chat.id;
-						var messageId = sended['message_id'];
-						bot.onReplyToMessage(chatId, messageId, function (sum) {
-							sum = sum.text;
-							startAccountRefill(accountNumber, sum, chatId, userId);
-						});
-					});
-			}
-		} else {
-			bot.sendMessage(chatId, 'Я умею пополнять любой счет в Яндекс.Деньгах с вашей карты. '
-						+ 'Хочу напомнить, что вводить данные карты вам придется на сайте Яндекс.Денег, '
-						+ 'если это не так - я не настоящий! Пожалуйста введите номер счета, которы мы '
-						+ 'должны пополнить, а через пробел сумму пополнения', forceReplyOpts)
-			.then(function (sended) {
-				var chatId = sended.chat.id;
-				var messageId = sended['message_id'];
-				bot.onReplyToMessage(chatId, messageId, function (msg) {
-					msg = msg.text.split(' ');
-					var accountNumber = msg[0];
-					var sum = msg[1];
-
-					if (sum) {
-						startAccountRefill(accountNumber, sum, chatId, userId);
-					} else {
-						bot.sendMessage(chatId, 'Теперь введите сумму, пожалуйста', forceReplyOpts)
-						.then(function (sended) {
-								var chatId = sended.chat.id;
-								var messageId = sended['message_id'];
-								bot.onReplyToMessage(chatId, messageId, function (sum) {
-									sum = sum.text;
-									startAccountRefill(accountNumber, sum, chatId, userId);
-								});
+				if (sum) {
+					startAccountRefill(accountNumber, sum, chatId, userId);
+				} else {
+					bot.sendMessage(chatId, 'Теперь введите сумму, пожалуйста', forceReplyOpts)
+					.then(function (sended) {
+							var chatId = sended.chat.id;
+							var messageId = sended['message_id'];
+							bot.onReplyToMessage(chatId, messageId, function (sum) {
+								sum = sum.text;
+								startAccountRefill(accountNumber, sum, chatId, userId);
 							});
-					}
-				});
+						});
+				}
 			});
-		}
+		});
 	}
 
 	function startAccountRefill(accountNumber, sum, chatId, userId) {

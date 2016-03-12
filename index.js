@@ -95,11 +95,15 @@ httpDispatcher.onGet('/', function (req, res) {
 		console.log(query);
 		yandexMoney.Wallet.getAccessToken(config.applicationId, query.code, config.redirectURI, config.applicationSecret,
 				saveTokenToDataBase);
-		res.writeHead(200, {'ContentType': 'text/plain'});
-		res.end('landing completed');
+		res.writeHead(301, {
+			'Location': '/success.html'
+		});
+		res.end();
 	} else {
-		res.writeHead(400, {'ContentType': 'text/plain'});
-		res.end('Bad request beaches');
+		res.writeHead(301, {
+			'Location': '/error.html'
+		});
+		res.end();
 	}
 });
 

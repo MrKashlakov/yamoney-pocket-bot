@@ -134,8 +134,6 @@ function startP2P(options, processComplete) {
 		}
 		if (data.status !== "success") {
 			// process failure
-			options.bot.sendMessage(options.chatId, 'Что-то пошло не так. Мне не удалось отправить перевод, попробуем снова: /send ?');
-			return;
 		}
 		var requestId = data['request_id'];
 

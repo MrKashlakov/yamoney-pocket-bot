@@ -37,7 +37,11 @@ function runBot() {
 
 	bot.onText(/\/?start$/i, function(msg) {
 		var chatId = msg.chat.id;
-		bot.sendMessage(chatId, 'Приветствие');
+		bot.sendMessage(chatId, 'Добрый день! Я бот карманный финансовый помощник.\n'
+				+ 'Я помогу вам сэкономить время на на небольших, но частых финансовых операциях.\n'
+				+ 'Я умею переводить деньги вашим друзьям.\n'
+				+ 'Я умею пополнять ваш счет в Яндекс.Деньги.\n'
+				+ 'Я смогу пополнить ваш сотовый, а ещё я всегда у вас под рукой!');
 	});
 
 	bot.onText(/\/?help$/i, function(msg) {
@@ -74,7 +78,7 @@ function runBot() {
 					});
 				} else {
 					console.log('-----accessToken not found--------');
-					var scope = ['account-info', 'operation-history', 'payment-p2p'];
+					var scope = ['account-info', 'operation-history', 'payment-p2p', 'payment-shop'];
 					var url = Wallet.buildObtainTokenUrl(config.applicationId,
 						config.redirectURI  + '?chatId=' + chatId + '&userId=' + userId + '&operation=phone',
 						scope);

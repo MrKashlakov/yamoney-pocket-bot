@@ -31,7 +31,7 @@ function p2pHandler(options, processComplete) {
 			var messageId = sended['message_id'];
 			bot.onReplyToMessage(chatId, messageId, function (msg) {
 				msg = msg.text.split(' ');
-
+				console.log(msg)
 				var to = msg[0];
 				var sum = msg[1];
 

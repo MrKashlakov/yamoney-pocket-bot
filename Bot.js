@@ -58,7 +58,9 @@ function runBot() {
 			'reply_to_message_id': msg['message_id'],
 			'reply_markup': JSON.stringify({
 				keyboard: [
-					['phone', 'refill', 'send (p2p)']
+					['phone'],
+					['refill'],
+					['send']
 				],
 			'one_time_keyboard': true
 			})

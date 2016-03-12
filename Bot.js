@@ -129,9 +129,10 @@ function runBot() {
 						console.log(err);
 						console.log(data);
 						if (err) {
-							// process error
+							bot.sendMessage(chatId, 'Видимо мы что то напутали, так как мне не удалось пополнить счет сотового телефона, попробуем снова: /phone');
+							return;
 						}
-						bot.sendMessage(chatId, 'Чувак, всё готово, проверяй');
+						bot.sendMessage(chatId, 'Я успешно пополнил счет телефона!');
 					});
 				} else {
 					console.log('-----accessToken not found--------');
@@ -215,39 +216,44 @@ function runBot() {
 		});
 	}
 
-	bot.onText(/send/, p2pHandler);
-	bot.onText(/Перевести деньги/, p2pHandler);
+	bot.onText(/send$/, p2pHandler);
+	bot.onText(/Перевести деньги$/i, p2pHandler);
 
-	bot.onText(/refill/, refillHandler);
-	bot.onText(/Пополнить счет/, refillHandler);
+	bot.onText(/refill$/, refillHandler);
+	bot.onText(/Пополнить счет$/i, refillHandler);
+	bot.onText(/Пополнить$/i, refillHandler);
+	bot.onText(/закинуть$/i, refillHandler);
 
 	return bot;
 
 	function refillHandler(msg) {
 		var chatId = msg.chat.id;
 		var userId = msg.from.id;
-		bot.sendMessage(chatId, 'Вы выбрали опцию пополнения кошелька. '
-				+ 'Пожалуйста, введите номер кошелька, который хотите пополнить', forceReplyOpts)
+		bot.sendMessage(chatId, 'Я умею пополнять любой счет в Яндекс.Деньгах с вашей карты. '
+					+ 'Хочу напомнить, что вводить данные карты вам придется на сайте Яндекс.Денег, '
+					+ 'если это не так - я не настоящий! Пожалуйста введите номер счета, которы мы '
+					+ 'должны пополнить, а через пробел сумму пополнения', forceReplyOpts)
 		.then(function (sended) {
 			var chatId = sended.chat.id;
 			var messageId = sended['message_id'];
-			bot.onReplyToMessage(chatId, messageId, function (accountNumber) {
-				accountNumber = accountNumber.text;
-				// TODO проверки всякие для accountNumber и если всё ок, то запрашиваем сумму
-				bot.sendMessage(chatId, 'Вы хотите пополнить кошелек ' + accountNumber
-						+ '. Теперь введите сумму, пожалуйста', forceReplyOpts)
-				.then(function (sended) {
-						var chatId = sended.chat.id;
-						var messageId = sended['message_id'];
-						bot.onReplyToMessage(chatId, messageId, function (sum) {
-							sum = sum.text;
-							// TODO проверки всякие для accountNumber и если всё ок, то запрашиваем сумму
-							bot.sendMessage(chatId, 'Итак, вы хотите пополнить аккаунт на сумму '
-								+ sum + '. Начинаем формировать ссылку на пополнение ;)');
+			bot.onReplyToMessage(chatId, messageId, function (msg) {
+				msg = msg.text.split(' ');
+				var accountNumber = msg[0];
+				var sum = msg[1];
 
-							startAccountRefill(accountNumber, sum, chatId, userId);
+				if (sum) {
+					startAccountRefill(accountNumber, sum, chatId, userId);
+				} else {
+					bot.sendMessage(chatId, 'Теперь введите сумму, пожалуйста', forceReplyOpts)
+					.then(function (sended) {
+							var chatId = sended.chat.id;
+							var messageId = sended['message_id'];
+							bot.onReplyToMessage(chatId, messageId, function (sum) {
+								sum = sum.text;
+								startAccountRefill(accountNumber, sum, chatId, userId);
+							});
 						});
-					});
+				}
 			});
 		});
 	}
@@ -301,8 +307,6 @@ function runBot() {
 			"pattern_id": "p2p",
 			"to": accountNumber,
 			"amount_due": sum,
-			"comment": "test payment comment from yandex-money-nodejs",
-			"message": "test payment message from yandex-money-nodejs",
 			"label": "testPayment"
 		};
 		var api = new ExternalPayment(instanceId);
@@ -322,7 +326,8 @@ function runBot() {
 				console.log('-----------------process-----------------');
 				console.log(data);
 				if (err) {
-					console.log('err');
+					bot.sendMessage(chatId, 'Видимо мы что то напутали, так как мне '
+							+ 'не удалось пополнить счет, попробуем снова: /refill ?');
 				// process error
 				}
 				// process data
@@ -341,10 +346,12 @@ function runBot() {
 					if (params.length) {
 						url += '?' + params.join('&');
 					}
-					bot.sendMessage(chatId, 'Если вы готовы пополнить мне счет, перейдите, пожалуйста по ссылке ' + url);
+					bot.sendMessage(chatId, 'А вот и [ссылка для ввода карты](' + url + ')', {
+						'parse_mode': 'Markdown'
+					});
 				} else {
-					bot.sendMessage(chatId, 'Что-то пошло не так. Возможно, вы неправильно '
-							+ 'указали номер счёта для пополнения. Попробуйте начать заново.');
+					bot.sendMessage(chatId, 'Видимо мы что то напутали, так как мне '
+							+ 'не удалось пополнить счет, попробуем снова: /refill ?');
 				}
 			});
 		});

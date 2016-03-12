@@ -81,8 +81,11 @@ httpDispatcher.onGet('/', function (req, res) {
 				console.log('-----------------requestComplete-----------------');
 				console.log(err);
 				console.log(data);
-				// bot.sendMessage(query.chatId, 'Ваши деньги успешно отправлены получателю, '
-						// + 'был рад помочь!');
+				if (err) {
+					bot.sendMessage(query.chatId, 'Видимо мы что то напутали, так как мне не удалось пополнить счет сотового телефона, попробуем снова: /phone');
+					return;
+				}
+				bot.sendMessage(query.chatId, 'Я успешно пополнил счет телефона!');
 			});
 		}
 

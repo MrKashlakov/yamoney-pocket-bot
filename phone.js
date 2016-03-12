@@ -19,32 +19,42 @@ function phoneHandler(options, processComplete) {
 	var chatId = options.chatId;
 	var accessToken = options.accessToken;
 	var bot = options.bot;
-	bot.sendMessage(chatId, 'Вы выбрали опцию перевод на телефон. '
-			+ 'Введите телефон в формате 79219990099', forceReplyOpts)
+	bot.sendMessage(chatId, 'Пополнить счет мобильного телефона - не проблема! Введите номер '
+			+ 'телефона, а через пробел сумму. Минимальная сумма 2 рубля', forceReplyOpts)
 	.then(function (sended) {
 		var chatId = sended.chat.id;
 		var messageId = sended['message_id'];
 		bot.onReplyToMessage(chatId, messageId, function (msg) {
-			msg = msg.text;
-			var phone = msg;
-			bot.sendMessage(chatId, 'Итак вы хотите перевести рублики на ' + msg
-					+ '. Теперь введите сумму, пожалуйста', forceReplyOpts)
-			.then(function (sended) {
-					var chatId = sended.chat.id;
-					var messageId = sended['message_id'];
-					bot.onReplyToMessage(chatId, messageId, function (sum) {
-						sum = sum.text;
-						bot.sendMessage(chatId, 'Итак, вы хотите перевести '
-							+ sum + '. Начинаем, блеать!');
+			msg = msg.text.split(' ');
+			var phone = msg[0];
+			var sum = msg[1];
 
-						startPhone({
-							bot: bot,
-							phone: phone,
-							amount: sum,
-							accessToken: accessToken
-						}, processComplete);
+			if (sum) {
+				startPhone({
+					bot: bot,
+					phone: phone,
+					amount: sum,
+					accessToken: accessToken,
+					chatId: chatId
+				}, processComplete);
+			} else {
+				bot.sendMessage(chatId, 'Теперь введите сумму, пожалуйста', forceReplyOpts)
+				.then(function (sended) {
+						var chatId = sended.chat.id;
+						var messageId = sended['message_id'];
+						bot.onReplyToMessage(chatId, messageId, function (sum) {
+							sum = sum.text;
+
+							startPhone({
+								bot: bot,
+								phone: phone,
+								amount: sum,
+								accessToken: accessToken,
+								chatId: chatId
+							}, processComplete);
+						});
 					});
-				});
+			}
 		});
 	});
 }
@@ -74,6 +84,9 @@ function startPhone(options, processComplete) {
 		console.log(data);
 		if (err) {
 			// process error
+			bot.sendMessage(options.chatId, 'Видимо мы что то напутали, так как мне не удалось пополнить'
+				+ ' счет сотового телефона, попробуем снова: /phone')
+			return;
 		}
 		if (data.status !== "success") {
 			// process failure

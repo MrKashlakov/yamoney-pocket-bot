@@ -44,9 +44,9 @@ function runBot() {
 		bot.sendMessage(chatId, 'Помощь');
 	});
 
-	bot.onText(/\/?settings$/i, function(msg) {
+	bot.onText(/\/?phone$/i, function(msg) {
 		var chatId = msg.chat.id;
-		bot.sendMessage(chatId, 'Какие-нибудь настройки');
+		bot.sendMessage(chatId, 'phone');
 	});
 
 	bot.onText(/\/cat/, function (msg) {
@@ -55,7 +55,7 @@ function runBot() {
 			'reply_to_message_id': msg['message_id'],
 			'reply_markup': JSON.stringify({
 				keyboard: [
-					['lol', 'refill', 'send (p2p)']
+					['phone', 'refill', 'send (p2p)']
 				],
 			'one_time_keyboard': true
 			})

@@ -29,7 +29,6 @@ function p2pHandler(options, processComplete) {
 		bot.onReplyToMessage(chatId, messageId, function (msg) {
 			msg = msg.text;
 			var to = msg;
-			// TODO проверки всякие для accountNumber и если всё ок, то запрашиваем сумму
 			bot.sendMessage(chatId, 'Итак вы хотите перевести рублики на ' + msg
 					+ '. Теперь введите сумму, пожалуйста', forceReplyOpts)
 			.then(function (sended) {

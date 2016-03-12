@@ -28,11 +28,13 @@ httpDispatcher.onGet('/', function (req, res) {
 		console.log(data);
 		if (data.error) {
 			bot.sendMessage(query.chatId, data.error);
+			return;
 		} else {
 			bot.sendMessage(query.chatId, 'Всё ок, ещё немного');
 		}
 
 		var accessToken = data['access_token'];
+		var userId = query.userId;
 		var options = {
 			bot: bot,
 			chatId: query.chatId,
@@ -40,7 +42,7 @@ httpDispatcher.onGet('/', function (req, res) {
 			holdForPickup: query.holdForPickup || false
 		};
 
-		var userId = query.userId;
+
 		p2pTokens
 			.insert({
 				userId: +userId,

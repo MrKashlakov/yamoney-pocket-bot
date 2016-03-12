@@ -97,11 +97,12 @@ function startP2P(options, processComplete) {
 		"pattern_id": "p2p",
 		"to": options.to,
 		"amount_due": options.sum,
-		"comment": "test payment comment from yandex-money-nodejs",
-		"message": "test payment message from yandex-money-nodejs",
+		// "comment": "test payment comment from yandex-money-nodejs",
+		// "message": "test payment message from yandex-money-nodejs",
 		"label": "testPayment",
 		"hold_for_pickup": options.holdForPickup
 	};
+	console.log(requestOptions)
 
 	api.requestPayment(requestOptions, function requestComplete(err, data) {
 		console.log('-----------------requestComplete-----------------');

@@ -58,9 +58,9 @@ function runBot() {
 			'reply_to_message_id': msg['message_id'],
 			'reply_markup': JSON.stringify({
 				keyboard: [
-					['phone'],
-					['refill'],
-					['send']
+					['Пополнить сотовый'],
+					['Пополнить счет'],
+					['Перевести деньги']
 				],
 			'one_time_keyboard': true
 			})
@@ -149,6 +149,7 @@ function runBot() {
 	}
 
 	bot.onText(/\/?phone$/i, phoneHandler);
+	bot.onText(/\/?Пополнить сотовый$/i, phoneHandler);
 
 	bot.onText(/Cat #1/,function (msg) {
 		var chatId = msg.chat.id;
@@ -214,9 +215,11 @@ function runBot() {
 		});
 	}
 
-	bot.onText(/send \(p2p\)/, p2pHandler);
+	bot.onText(/send/, p2pHandler);
+	bot.onText(/Перевести деньги/, p2pHandler);
 
 	bot.onText(/refill/, refillHandler);
+	bot.onText(/Пополнить счет/, refillHandler);
 
 	return bot;
 

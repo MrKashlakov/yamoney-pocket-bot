@@ -1,11 +1,15 @@
 var TelegramBot = require('node-telegram-bot-api');
-
 var yandexMoney = require("yandex-money-sdk");
-
 var config = require('./config');
-
 var Wallet = yandexMoney.Wallet;
 var ExternalPayment = yandexMoney.ExternalPayment;
+
+// Опции для ожидания ответа
+var forceReplyOpts = {
+	'reply_markup': JSON.stringify({
+		'force_reply': true
+	})
+};
 
 // Setup polling way
 var bot = new TelegramBot(config.token, {polling: true});
@@ -17,13 +21,7 @@ bot.onText(/\/echo (.+)/, function (msg, match) {
 	bot.sendMessage(fromId, resp);
 });
 
-// Any kind of message
-// bot.on('message', function (msg) {
-//   var chatId = msg.chat.id;
-//   // photo can be: a file path, a stream or a Telegram file_id
-//   var photo = 'cat.jpg';
-//   bot.sendPhoto(chatId, photo, {caption: 'Kittens'});
-// });
+// Отладочная информация
 bot.on('message', function (msg) {
 	console.log(msg);
 });
@@ -87,21 +85,48 @@ bot.onText(/Wallet/,function (msg) {
 
 	// Меняем на постоянный токен
 	// Wallet.getAccessToken(config.applicationId, 'code', config.redirectURI, scope, function(err, data) {
-	// 	console.log('------------------getAccessToken---------------');
-	// 	console.log(response.statusCode);
-	// 	console.log(data.status);
-	// 	console.log(data);
-	// 	if(err) {
-	// 		// process error
-	// 	}
-	// 	var accessToken = data['access_token'];
-	// 	// save it to DB, config, etc..
+	//  console.log('------------------getAccessToken---------------');
+	//  console.log(response.statusCode);
+	//  console.log(data.status);
+	//  console.log(data);
+	//  if(err) {
+	//    // process error
+	//  }
+	//  var accessToken = data['access_token'];
+	//  // save it to DB, config, etc..
 	// });
 });
 
 bot.onText(/external/,function (msg) {
 	var chatId = msg.chat.id;
 
+	bot.sendMessage(chatId, 'Вы выбрали опцию пополнения кошелька. '
+			+ 'Пожалуйста, введите номер кошелька, который хотите пополнить', forceReplyOpts)
+	.then(function (sended) {
+		var chatId = sended.chat.id;
+		var messageId = sended['message_id'];
+		bot.onReplyToMessage(chatId, messageId, function (accountNumber) {
+			accountNumber = accountNumber.text;
+			// TODO проверки всякие для accountNumber и если всё ок, то запрашиваем сумму
+			bot.sendMessage(chatId, 'Вы хотите пополнить кошелек ' + accountNumber
+					+ '. Теперь введите сумму, пожалуйста', forceReplyOpts)
+			.then(function (sended) {
+					var chatId = sended.chat.id;
+					var messageId = sended['message_id'];
+					bot.onReplyToMessage(chatId, messageId, function (sum) {
+						sum = sum.text;
+						// TODO проверки всякие для accountNumber и если всё ок, то запрашиваем сумму
+						bot.sendMessage(chatId, 'Итак, вы хотите пополнить аккаунт на сумму '
+							+ sum + '. Начинаем формировать ссылку на пополнение ;)');
+
+						startAccountRefill(accountNumber, sum, chatId);
+					});
+				});
+		});
+	});
+});
+
+function startAccountRefill(accountNumber, sum, chatId) {
 	var requestId = null;
 	var instanceId = null;
 
@@ -117,8 +142,9 @@ bot.onText(/external/,function (msg) {
 
 			var requestOptions = {
 				"pattern_id": "p2p",
-				"to": "410013269422933",
-				"amount_due": "1.00",
+				// "to": "410013269422933",
+				"to": accountNumber,
+				"amount_due": sum,
 				"comment": "test payment comment from yandex-money-nodejs",
 				"message": "test payment message from yandex-money-nodejs",
 				"label": "testPayment"
@@ -171,4 +197,4 @@ bot.onText(/external/,function (msg) {
 			});
 		}
 	});
-});
+}

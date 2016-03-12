@@ -1,0 +1,16 @@
+{
+  "name": "Ckpuna4Bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.20.1",
+    "yandex-money-sdk": "^0.1.6"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nikolay Tolochny",
+  "license": "ISC"
+}

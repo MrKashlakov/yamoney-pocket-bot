@@ -55,7 +55,7 @@ function runBot() {
 			'reply_markup': JSON.stringify({
 				keyboard: [
 					['Cat #1', 'Cat #2'],
-					['Cat #3', 'external', 'Wallet']
+					['Cat #3', 'refill', 'Wallet']
 				],
 			'one_time_keyboard': true
 			})

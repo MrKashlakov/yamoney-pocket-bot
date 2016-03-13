@@ -73,6 +73,7 @@ httpDispatcher.onGet('/', function (req, res) {
 						+ 'был рад помочь!');
 			});
 		} else {
+			bot.sendMessage(query.chatId, 'Ура! Все получилось!');
 			phone({
 				bot: bot,
 				chatId: query.chatId,

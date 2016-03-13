@@ -62,9 +62,9 @@ function runBot() {
 					['Пополнить счет'],
 					['Перевести деньги']
 				],
-				'one_time_keyboard': true,
-				'parse_mode': 'Markdown'
-			})
+				'one_time_keyboard': true
+			}),
+			'parse_mode': 'Markdown'
 		};
 
 		var urlStickers = 'https://telegram.me/addstickers/EasyWayBot';

@@ -324,7 +324,7 @@ function runBot() {
 
 			api.process({
 				"request_id": requestId,
-				'ext_auth_success_uri': config.redirectURI,
+				'ext_auth_success_uri': config.redirectURI + '?extenal=true',
 				'ext_auth_fail_uri': config.redirectURI
 			}, function (err, data) {
 				console.log('-----------------process-----------------');

@@ -100,6 +100,11 @@ httpDispatcher.onGet('/', function (req, res) {
 			'Location': '/success.html'
 		});
 		res.end();
+	} else if (query.extenal) {
+		res.writeHead(301, {
+			'Location': '/externalSuccess.html'
+		});
+		res.end();
 	} else {
 		res.writeHead(301, {
 			'Location': '/error.html'

@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "aes-js": "^0.2.4",
     "httpdispatcher": "^1.0.0",
     "mongodb-promises": "^0.2.0",
     "node-telegram-bot-api": "^0.20.1",

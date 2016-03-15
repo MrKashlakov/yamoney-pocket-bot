@@ -5,6 +5,7 @@ var Wallet = yandexMoney.Wallet;
 var ExternalPayment = yandexMoney.ExternalPayment;
 var p2p = require('./p2p');
 var phone = require('./phone');
+var aes = require('./aes-crypt');
 
 var dbName = 'easyway';
 var db = require('mongodb-promises').db('localhost:27017', dbName);
@@ -119,7 +120,7 @@ function runBot() {
 		}, function(err, item) {
 			item.toArray().then(function(array) {
 				if (array.length) {
-					var accessToken = array[0].accessToken;
+					var accessToken = aes.decrypt(userId, array[0].accessToken);
 					console.log('-----accessToken found--------');
 					console.log(array);
 
@@ -182,7 +183,7 @@ function runBot() {
 		}, function(err, item) {
 			item.toArray().then(function(array) {
 				if (array.length) {
-					var accessToken = array[0].accessToken;
+					var accessToken = aes.decrypt(userId, array[0].accessToken);
 					console.log('-----accessToken found--------');
 					console.log(array);
 
@@ -270,7 +271,7 @@ function runBot() {
 		}, function(err, item) {
 			item.toArray().then(function(array) {
 				if (array.length) {
-					instanceId = array[0].instanceId;
+					instanceId = aes.decrypt(userId, array[0].instanceId);
 					console.log('-----userToken found--------');
 					console.log(array);
 					reffilAccount(instanceId, accountNumber, sum, chatId);
@@ -288,7 +289,7 @@ function runBot() {
 							externalTokens
 								.insert({
 									userId: +userId,
-									instanceId: instanceId,
+									instanceId: aes.encrypt(userId, instanceId),
 									created: Math.floor(Date.now() / 1000)
 								})
 								.then(function(result) {

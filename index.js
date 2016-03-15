@@ -8,6 +8,7 @@ var config = require('./config');
 var Bot = require('./Bot');
 var p2p = require('./p2p');
 var phone = require('./phone');
+var aes = require('./aes-crypt');
 
 
 var dbName = 'easyway';
@@ -33,13 +34,13 @@ httpDispatcher.onGet('/', function (req, res) {
 		}
 
 
-		var accessToken = data['access_token'];
 		var userId = query.userId;
+		var accessToken = data['access_token'];
 
 		p2pTokens
 			.insert({
 				userId: +userId,
-				accessToken: accessToken,
+				accessToken: aes.encrypt(userId, accessToken),
 				created: Math.floor(Date.now() / 1000)
 			})
 			.then(function(result) {
